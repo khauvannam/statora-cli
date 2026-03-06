@@ -16,6 +16,8 @@ type Context struct {
 	Log *zap.Logger
 	// Data allows stages to pass arbitrary values to downstream stages.
 	Data map[string]any
+	// CapturedOutput holds stderr/stdout captured by stages for error reporting.
+	CapturedOutput string
 }
 
 // Stage is a single step in an install pipeline.

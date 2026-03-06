@@ -1,6 +1,7 @@
 # Binary
 statora
 statora-*
+.statora
 
 # Build artifacts
 dist/

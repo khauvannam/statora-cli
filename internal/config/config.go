@@ -19,6 +19,7 @@ type Paths struct {
 	VersionsDir string // ~/.statora/versions
 	GlobalFile  string // ~/.statora/versions/global.toml
 	ConfigFile  string // ~/.statora/config.toml
+	ErrorsDir   string // ~/.statora/errors
 }
 
 // ProjectConfig holds the parsed .statora project file.
@@ -60,6 +61,7 @@ func New(debug bool) (*Config, error) {
 		VersionsDir: filepath.Join(statoraHome, "versions"),
 		GlobalFile:  filepath.Join(statoraHome, "versions", "global.toml"),
 		ConfigFile:  filepath.Join(statoraHome, "config.toml"),
+		ErrorsDir:   filepath.Join(statoraHome, "errors"),
 	}
 
 	if err := ensureDirs(paths); err != nil {
@@ -154,6 +156,7 @@ func ensureDirs(p Paths) error {
 		p.BuildDir,
 		p.RescacheDir,
 		p.VersionsDir,
+		p.ErrorsDir,
 	}
 	for _, d := range dirs {
 		if err := os.MkdirAll(d, 0o755); err != nil {

@@ -13,7 +13,10 @@ func New(debug bool) (*zap.Logger, error) {
 		cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		return cfg.Build()
 	}
-	return zap.NewProduction()
+	cfg := zap.NewProductionConfig()
+	cfg.OutputPaths = []string{"stderr"}
+	cfg.ErrorOutputPaths = []string{"stderr"}
+	return cfg.Build()
 }
 
 // Must is New but panics on error.
