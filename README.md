@@ -6,10 +6,101 @@ PHP version manager for developers who work across multiple projects with differ
 
 ## Install
 
+### Homebrew (recommended)
+
 ```bash
-make build
-# or
-go install .
+brew tap khauvannam/tap
+brew install statora
+```
+
+### Manual (curl)
+
+Download the latest binary for your platform from the [releases page](https://github.com/khauvannam/statora-cli/releases) and place it on your `$PATH`:
+
+```bash
+# macOS (Apple Silicon)
+curl -fsSL https://github.com/khauvannam/statora-cli/releases/latest/download/statora_darwin_arm64.tar.gz \
+  | tar -xz -C /usr/local/bin statora
+
+# macOS (Intel)
+curl -fsSL https://github.com/khauvannam/statora-cli/releases/latest/download/statora_darwin_amd64.tar.gz \
+  | tar -xz -C /usr/local/bin statora
+
+# Linux (amd64)
+curl -fsSL https://github.com/khauvannam/statora-cli/releases/latest/download/statora_linux_amd64.tar.gz \
+  | tar -xz -C /usr/local/bin statora
+```
+
+### Build from source
+
+```bash
+git clone https://github.com/khauvannam/statora-cli.git
+cd statora-cli
+go build -o /usr/local/bin/statora .
+```
+
+---
+
+## Setup
+
+### 1. Verify the installation
+
+```bash
+statora --help
+```
+
+### 2. Add statora to your shell (only needed for manual installs)
+
+If `statora` is not already on your `$PATH` (Homebrew handles this automatically), add it:
+
+**bash** (`~/.bashrc` or `~/.bash_profile`):
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**zsh** (`~/.zshrc`):
+```zsh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**fish** (`~/.config/fish/config.fish`):
+```fish
+fish_add_path ~/.local/bin
+```
+
+### 3. Set up shims so `php` and `composer` dispatch to the active version
+
+Statora doubles as a `php` and `composer` shim. Create symlinks once:
+
+```bash
+ln -sf (which statora) /usr/local/bin/php      # fish
+ln -sf $(which statora) /usr/local/bin/php     # bash / zsh
+
+ln -sf (which statora) /usr/local/bin/composer  # fish
+ln -sf $(which statora) /usr/local/bin/composer # bash / zsh
+```
+
+> If `/usr/local/bin` is not writable, use `sudo` or pick another directory already on your `$PATH`.
+
+### 4. Activate a version
+
+Set a global default so `php` and `composer` work from any directory:
+
+```bash
+statora php global 8.3.6
+statora composer global 2.7.4
+statora switch
+```
+
+`statora switch` writes the active binary paths to `~/.statora/.rescache`. The shims read from this cache at exec time — zero startup overhead.
+
+### 5. Verify
+
+```bash
+php -v
+composer --version
 ```
 
 ---
@@ -135,19 +226,6 @@ Reads `.statora`, compares against active versions, builds a plan, and shows an 
 
   Apply? [y/N]
 ```
-
----
-
-## Dispatch
-
-Statora doubles as a `php` and `composer` shim. Create symlinks:
-
-```bash
-ln -s $(which statora) /usr/local/bin/php
-ln -s $(which statora) /usr/local/bin/composer
-```
-
-When invoked as `php` or `composer`, statora reads the rescache and exec's the correct binary with zero overhead (no fx startup, one file read).
 
 ---
 
