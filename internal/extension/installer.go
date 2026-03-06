@@ -69,6 +69,7 @@ func (i *Installer) installFromSource(name string) error {
 	// Download from PECL source tarball.
 	srcURL := fmt.Sprintf("https://pecl.php.net/get/%s", name)
 	srcDir := filepath.Join(i.cfg.Paths.BuildDir, "ext-"+name)
+	_ = os.RemoveAll(srcDir) // remove any partial/failed previous extraction
 	if err := os.MkdirAll(srcDir, 0o755); err != nil {
 		return err
 	}
@@ -82,15 +83,21 @@ func (i *Installer) installFromSource(name string) error {
 		return fmt.Errorf("extracting %s: %w", name, err)
 	}
 
-	// Find extracted subdir.
+	// Find extracted subdir (first directory entry).
 	entries, err := os.ReadDir(srcDir)
 	if err != nil {
 		return err
 	}
-	if len(entries) == 0 {
-		return fmt.Errorf("nothing extracted for %s", name)
+	var extSrc string
+	for _, e := range entries {
+		if e.IsDir() {
+			extSrc = filepath.Join(srcDir, e.Name())
+			break
+		}
 	}
-	extSrc := filepath.Join(srcDir, entries[0].Name())
+	if extSrc == "" {
+		return fmt.Errorf("no source directory found after extracting %s", name)
+	}
 
 	run := func(binName string, args ...string) error {
 		cmd := exec.Command(binName, args...)
@@ -111,7 +118,17 @@ func (i *Installer) installFromSource(name string) error {
 		return fmt.Errorf("make: %w", err)
 	}
 
-	return i.linkBuilt(name)
+	// After make, the .so is in extSrc/modules/ — move it to our available dir.
+	soName := name + ".so"
+	builtSo := filepath.Join(extSrc, "modules", soName)
+	if _, err := os.Stat(builtSo); err != nil {
+		return fmt.Errorf("compiled extension not found at %s", builtSo)
+	}
+	availDir := i.cfg.ExtAvailableDir(i.phpVersion)
+	if err := os.MkdirAll(availDir, 0o755); err != nil {
+		return err
+	}
+	return os.Rename(builtSo, filepath.Join(availDir, soName))
 }
 
 // linkBuilt finds the compiled .so and links it into available/.
