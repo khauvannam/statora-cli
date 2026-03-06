@@ -2,8 +2,9 @@ name: Release
 
 on:
   push:
-    branches:
-      - production
+    tags:
+      - "v*"
+
 
 permissions:
   contents: write
