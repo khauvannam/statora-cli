@@ -75,14 +75,16 @@ fish_add_path ~/.local/bin
 Statora doubles as a `php` and `composer` shim. Create symlinks once:
 
 ```bash
-ln -sf (which statora) /usr/local/bin/php      # fish
-ln -sf $(which statora) /usr/local/bin/php     # bash / zsh
+# bash / zsh
+ln -sf "$(which statora)" "$(dirname "$(which statora)")/php"
+ln -sf "$(which statora)" "$(dirname "$(which statora)")/composer"
 
-ln -sf (which statora) /usr/local/bin/composer  # fish
-ln -sf $(which statora) /usr/local/bin/composer # bash / zsh
+# fish
+ln -sf (which statora) (path dirname (which statora))/php
+ln -sf (which statora) (path dirname (which statora))/composer
 ```
 
-> If `/usr/local/bin` is not writable, use `sudo` or pick another directory already on your `$PATH`.
+> This places the symlinks next to the `statora` binary, so they are guaranteed to be on your `$PATH`.
 
 ### 4. Activate a version
 
@@ -101,6 +103,40 @@ statora switch
 ```bash
 php -v
 composer --version
+```
+
+---
+
+## Uninstall
+
+### 1. Remove the shim symlinks
+
+```bash
+# bash / zsh
+rm "$(dirname "$(which statora)")/php"
+rm "$(dirname "$(which statora)")/composer"
+
+# fish
+rm (path dirname (which statora))/php
+rm (path dirname (which statora))/composer
+```
+
+### 2. Remove the statora binary and data
+
+**Homebrew:**
+```bash
+brew uninstall statora
+brew untap khauvannam/tap
+```
+
+**Manual install:**
+```bash
+rm "$(which statora)"
+```
+
+**All installs — remove statora data directory:**
+```bash
+rm -rf ~/.statora
 ```
 
 ---
