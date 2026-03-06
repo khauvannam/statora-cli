@@ -1,7 +1,3 @@
-Here is the complete Cobra command tree, modeled after the ergonomics of `goenv` and `phpenv`.
-
----
-
 # Statora — Cobra Command Tree
 
 ## Root
