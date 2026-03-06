@@ -37,6 +37,7 @@ archives:
   - id: statora
     builds:
       - statora
+      - statora-universal
     name_template: >-
       {{ .ProjectName }}_
       {{- .Version }}_
