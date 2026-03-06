@@ -37,7 +37,7 @@
 
 | Library | Import | Purpose |
 |---|---|---|
-| survey | `github.com/AlecAiven/survey/v2` | Interactive prompts for `statora switch` SwitchPlan confirmation |
+| bubbletea | `github.com/charmbracelet/bubbletea` | Interactive prompts for `statora switch` SwitchPlan confirmation |
 | tablewriter | `github.com/olekukonko/tablewriter` | Table output for `list` commands |
 | color | `github.com/fatih/color` | Colored terminal output for status, warnings, errors |
 
