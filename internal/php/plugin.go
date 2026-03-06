@@ -39,10 +39,11 @@ func (p *Plugin) Install(version string) error {
 	)
 
 	ctx := &installer.Context{
-		Version: version,
-		Cfg:     p.cfg,
-		Log:     p.log,
-		Data:    map[string]any{},
+		Version:  version,
+		Category: "php",
+		Cfg:      p.cfg,
+		Log:      p.log,
+		Data:     map[string]any{},
 	}
 	return pipeline.Run(ctx)
 }

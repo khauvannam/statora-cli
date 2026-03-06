@@ -45,25 +45,37 @@ func writeErrorLog(ctx *Context, stage string, err error) string {
 	if ctx.Cfg == nil {
 		return ""
 	}
-	dir := ctx.Cfg.Paths.ErrorsDir
+
+	category := ctx.Category
+	if category == "" {
+		category = "general"
+	}
+
+	dir := filepath.Join(ctx.Cfg.Paths.ErrorsDir, category)
 	if mkErr := os.MkdirAll(dir, 0o755); mkErr != nil {
 		return ""
 	}
 
 	ts := time.Now().UTC()
-	filename := ts.Format("2006-01-02T15-04-05Z") + "-error.log"
-	path := filepath.Join(dir, filename)
+	// One file per day: errors/php/2026-03-06.log
+	path := filepath.Join(dir, ts.Format("2006-01-02")+".log")
+
+	f, fErr := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if fErr != nil {
+		return ""
+	}
+	defer f.Close()
 
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "=== Statora Error Log ===\n")
-	fmt.Fprintf(&sb, "Timestamp : %s\n", ts.Format(time.RFC3339))
-	fmt.Fprintf(&sb, "Version   : %s\n", ctx.Version)
-	fmt.Fprintf(&sb, "Stage     : %s\n", stage)
-	fmt.Fprintf(&sb, "Error     : %s\n", err.Error())
+	fmt.Fprintf(&sb, "=== Error at %s ===\n", ts.Format(time.RFC3339))
+	fmt.Fprintf(&sb, "Version : %s\n", ctx.Version)
+	fmt.Fprintf(&sb, "Stage   : %s\n", stage)
+	fmt.Fprintf(&sb, "Error   : %s\n", err.Error())
 	if ctx.CapturedOutput != "" {
-		fmt.Fprintf(&sb, "\n=== Captured Output ===\n%s\n", ctx.CapturedOutput)
+		fmt.Fprintf(&sb, "\n--- Captured Output ---\n%s\n", ctx.CapturedOutput)
 	}
+	fmt.Fprintf(&sb, "\n")
 
-	_ = os.WriteFile(path, []byte(sb.String()), 0o644)
+	_, _ = f.WriteString(sb.String())
 	return path
 }

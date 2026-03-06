@@ -10,6 +10,8 @@ import (
 type Context struct {
 	// Version being installed (e.g. "8.2.15").
 	Version string
+	// Category is used for error log directory: "php", "composer", or "ext".
+	Category string
 	// Cfg holds resolved application paths.
 	Cfg *config.Config
 	// Log is the logger for the management path.

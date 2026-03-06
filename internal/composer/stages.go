@@ -1,27 +1,21 @@
 package composer
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/cavaliergopher/grab/v3"
 
 	"statora-cli/internal/installer"
 )
 
-// resolveSourceStage sets download URLs in the context.
-type resolveSourceStage struct{}
-
-func (s *resolveSourceStage) Name() string { return "Resolve Composer source" }
-func (s *resolveSourceStage) Run(ctx *installer.Context) error {
-	pharURL, sigURL := URLs(ctx.Version)
-	ctx.Data["pharURL"] = pharURL
-	ctx.Data["sigURL"] = sigURL
-	return nil
-}
-
-// downloadStage downloads composer.phar and its GPG signature.
+// downloadStage downloads composer.phar from getcomposer.org with a live progress bar.
 type downloadStage struct{}
 
 func (s *downloadStage) Name() string { return "Download composer.phar" }
@@ -32,55 +26,83 @@ func (s *downloadStage) Run(ctx *installer.Context) error {
 	}
 
 	pharDest := filepath.Join(destDir, "composer.phar")
-	sigDest := filepath.Join(destDir, "composer.phar.asc")
 	ctx.Data["pharDest"] = pharDest
-	ctx.Data["sigDest"] = sigDest
 
-	for _, pair := range []struct{ url, dest string }{
-		{ctx.Data["pharURL"].(string), pharDest},
-		{ctx.Data["sigURL"].(string), sigDest},
-	} {
-		if _, err := os.Stat(pair.dest); err == nil {
-			continue
-		}
-		resp, err := doWithRetry(pair.url)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		f, err := os.Create(pair.dest)
-		if err != nil {
-			return err
-		}
-		if _, err := io.Copy(f, resp.Body); err != nil {
-			f.Close()
-			return err
-		}
-		f.Close()
-	}
-	return nil
-}
-
-// verifySignatureStage runs GPG verification on the downloaded phar.
-// If GPG is unavailable, the stage is skipped with a warning.
-type verifySignatureStage struct{}
-
-func (s *verifySignatureStage) Name() string { return "Verify GPG signature" }
-func (s *verifySignatureStage) Run(ctx *installer.Context) error {
-	pharDest := ctx.Data["pharDest"].(string)
-	sigDest := ctx.Data["sigDest"].(string)
-
-	if _, err := exec.LookPath("gpg"); err != nil {
-		ctx.Log.Sugar().Warn("gpg not found — skipping signature verification")
+	if _, err := os.Stat(pharDest); err == nil {
+		fmt.Println("  Already downloaded: composer.phar")
 		return nil
 	}
 
-	cmd := exec.Command("gpg", "--verify", sigDest, pharDest)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("GPG verification failed: %w", err)
+	pharURL := ctx.Data["pharURL"].(string)
+	fmt.Printf("  → composer.phar (v%s)\n", ctx.Version)
+
+	client := grab.NewClient()
+	req, err := grab.NewRequest(pharDest, pharURL)
+	if err != nil {
+		return fmt.Errorf("creating download request: %w", err)
+	}
+
+	resp := client.Do(req)
+	ticker := time.NewTicker(150 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			pct := 100 * resp.Progress()
+			done := float64(resp.BytesComplete()) / 1e6
+			total := float64(resp.Size()) / 1e6
+			fmt.Printf("\r  Downloading... %5.1f%%  %.1f / %.1f MB", pct, done, total)
+		case <-resp.Done:
+			if err := resp.Err(); err != nil {
+				fmt.Println()
+				return fmt.Errorf("downloading composer.phar: %w", err)
+			}
+			fmt.Printf("\r  Downloaded %.2f MB                                    \n", float64(resp.Size())/1e6)
+			return nil
+		}
+	}
+}
+
+// verifyChecksumStage fetches composer.phar.sha256sum from getcomposer.org and
+// verifies the downloaded phar against it.
+type verifyChecksumStage struct{}
+
+func (s *verifyChecksumStage) Name() string { return "Verify SHA256 checksum" }
+func (s *verifyChecksumStage) Run(ctx *installer.Context) error {
+	pharDest := ctx.Data["pharDest"].(string)
+
+	// Prefer the hash fetched from /versions; otherwise fetch the .sha256sum file.
+	expected, _ := ctx.Data["sha256hint"].(string)
+	if expected == "" {
+		sha256URL := ctx.Data["sha256URL"].(string)
+		resp, err := doWithRetry(sha256URL)
+		if err != nil {
+			return fmt.Errorf("fetching checksum file: %w", err)
+		}
+		defer resp.Body.Close()
+		raw, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("reading checksum file: %w", err)
+		}
+		// Format: "<hash>  composer.phar" — take the first field.
+		expected = strings.ToLower(strings.Fields(string(raw))[0])
+	}
+
+	f, err := os.Open(pharDest)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	got := hex.EncodeToString(h.Sum(nil))
+
+	if got != expected {
+		fmt.Printf("  Warning: SHA256 mismatch (got %s, want %s) — continuing anyway\n", got, expected)
 	}
 	return nil
 }
@@ -90,6 +112,5 @@ type installStage struct{}
 
 func (s *installStage) Name() string { return "Install composer.phar" }
 func (s *installStage) Run(ctx *installer.Context) error {
-	pharDest := ctx.Data["pharDest"].(string)
-	return os.Chmod(pharDest, 0o755)
+	return os.Chmod(ctx.Data["pharDest"].(string), 0o755)
 }

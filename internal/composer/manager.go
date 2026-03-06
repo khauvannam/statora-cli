@@ -22,24 +22,37 @@ func NewManager(cfg *config.Config, log *zap.Logger) *Manager {
 }
 
 // Install downloads and installs a Composer version.
-func (m *Manager) Install(version string) error {
-	if m.IsInstalled(version) {
-		fmt.Printf("Composer %s is already installed.\n", version)
+// version may be a concrete version ("2.7.4") or a semver constraint (">= 2.2.0, < 3.0.0").
+func (m *Manager) Install(versionOrConstraint string) error {
+	concrete, sha256, err := ResolveVersion(versionOrConstraint)
+	if err != nil {
+		return fmt.Errorf("resolving Composer version: %w", err)
+	}
+	if concrete != versionOrConstraint {
+		fmt.Printf("  Resolved %q → %s\n", versionOrConstraint, concrete)
+	}
+
+	if m.IsInstalled(concrete) {
+		fmt.Printf("Composer %s is already installed.\n", concrete)
 		return nil
 	}
 
 	pipeline := installer.New(
-		&resolveSourceStage{},
 		&downloadStage{},
-		&verifySignatureStage{},
+		&verifyChecksumStage{},
 		&installStage{},
 	)
 
 	ctx := &installer.Context{
-		Version: version,
-		Cfg:     m.cfg,
-		Log:     m.log,
-		Data:    map[string]any{},
+		Version:  concrete,
+		Category: "composer",
+		Cfg:      m.cfg,
+		Log:      m.log,
+		Data: map[string]any{
+			"pharURL":    DownloadURL(concrete),
+			"sha256URL":  SHA256URL(concrete),
+			"sha256hint": sha256, // from getcomposer.org/versions (may be empty)
+		},
 	}
 	return pipeline.Run(ctx)
 }
