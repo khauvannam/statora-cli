@@ -1,7 +1,3 @@
-Here is the full redesign, narrowed to PHP tooling only with the compatibility-aware switching system.
-
----
-
 # Statora — PHP Tooling Architecture
 
 ## 1. Scope
