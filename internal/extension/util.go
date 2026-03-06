@@ -17,7 +17,7 @@ func downloadFile(url, dest string) error {
 		resp *http.Response
 		err  error
 	)
-	for attempt := 0; attempt < 3; attempt++ {
+	for attempt := range 3 {
 		resp, err = client.Get(url)
 		if err == nil && resp.StatusCode == 200 {
 			break
