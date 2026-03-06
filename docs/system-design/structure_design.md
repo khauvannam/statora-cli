@@ -425,17 +425,3 @@ Extension install stages:
   LinkStage              ← copy .so to available/
   InvalidateCacheStage
 ```
-
----
-
-## 11. Summary of What Changed vs Previous Design
-
-| Concern | Previous | This design |
-|---|---|---|
-| Scope | generic multi-runtime | PHP, Composer, extensions only |
-| Composer | not modeled | fully versioned, compat-matrix resolved |
-| Extensions | plugin interface only | binary-first + phpize fallback, symlink enable/disable |
-| Switch UX | not designed | SwitchPlan with interactive prompt |
-| Compat | not modeled | first-class matrix in internal/compat |
-| Dispatcher | generic argv[0] | composer dispatches under resolved PHP |
-| Project structure | flat internal/ | domain-grouped: php, composer, extension, switcher, compat |
