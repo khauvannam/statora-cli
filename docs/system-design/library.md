@@ -22,7 +22,6 @@
 | Library | Import | Purpose |
 |---|---|---|
 | grab | `github.com/cavaliergopher/grab/v3` | Resumable downloads with progress, used in installer pipeline |
-| go-retryablehttp | `github.com/hashicorp/go-retryablehttp` | Retry logic for PHP.net, getcomposer.org, PECL requests |
 
 ---
 
