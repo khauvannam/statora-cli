@@ -30,16 +30,17 @@ var localCmd = &cobra.Command{
 			_ = v.ReadInConfig()
 
 			current := v.GetString("composer")
-			if current == version {
-				fmt.Printf("Composer is already set to %s (no change).\n", version)
-				return nil
-			}
 
 			if !m.IsInstalled(version) {
 				fmt.Printf("Composer %s is not installed. Installing...\n", version)
 				if err := m.Install(version); err != nil {
 					return fmt.Errorf("auto-install Composer %s: %w", version, err)
 				}
+			}
+
+			if current == version {
+				fmt.Printf("Composer is already set to %s (no change).\n", version)
+				return nil
 			}
 
 			v.Set("composer", version)

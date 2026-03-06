@@ -192,6 +192,8 @@ func (s *compileStage) Run(ctx *installer.Context) error {
 		"--prefix=" + prefix,
 		"--enable-mbstring",
 		"--with-openssl",
+		"--disable-phpdbg",  // phpdbg has linker issues on macOS ARM64
+		"--without-pear",    // skip PEAR download during install
 	}
 	if runtime.GOOS == "darwin" {
 		if p := darwinIconvPrefix(); p != "" {

@@ -30,16 +30,17 @@ var localCmd = &cobra.Command{
 			_ = v.ReadInConfig()
 
 			current := v.GetString("php")
-			if current == version {
-				fmt.Printf("PHP is already set to %s (no change).\n", version)
-				return nil
-			}
 
 			if !p.IsInstalled(version) {
 				fmt.Printf("PHP %s is not installed. Installing...\n", version)
 				if err := p.Install(version); err != nil {
 					return fmt.Errorf("auto-install PHP %s: %w", version, err)
 				}
+			}
+
+			if current == version {
+				fmt.Printf("PHP is already set to %s (no change).\n", version)
+				return nil
 			}
 
 			v.Set("php", version)
