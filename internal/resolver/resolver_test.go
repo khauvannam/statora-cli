@@ -88,3 +88,68 @@ func TestNearestProjectFile(t *testing.T) {
 	found := resolver.NearestProjectFile(sub)
 	assert.Equal(t, root, found)
 }
+
+func TestResolve_NormalizesPartialPHPToInstalled(t *testing.T) {
+	cfg := makeConfig(t)
+
+	// Fake-install PHP 8.1.25
+	phpBin := cfg.PHPBin("8.1.25")
+	require.NoError(t, os.MkdirAll(filepath.Dir(phpBin), 0o755))
+	require.NoError(t, os.WriteFile(phpBin, []byte("#!/bin/sh"), 0o755))
+
+	// Fake-install composer 2.9.5 wrapper
+	composerBin := cfg.ComposerBin("2.9.5")
+	require.NoError(t, os.MkdirAll(filepath.Dir(composerBin), 0o755))
+	require.NoError(t, os.WriteFile(composerBin, []byte("#!/bin/sh"), 0o755))
+
+	checker := compat.NewChecker()
+	r := resolver.New(cfg, checker)
+
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".statora"), []byte("php = \"8.1\"\ncomposer = \"2.9.5\"\n"), 0o644))
+
+	res, err := r.Resolve(dir)
+	require.NoError(t, err)
+	assert.Equal(t, "8.1.25", res.PHP)     // normalized from "8.1"
+	assert.Equal(t, "2.9.5", res.Composer) // already concrete, unchanged
+}
+
+func TestResolve_NormalizesPartialComposerToInstalled(t *testing.T) {
+	cfg := makeConfig(t)
+
+	// Fake-install PHP 8.1.25
+	phpBin := cfg.PHPBin("8.1.25")
+	require.NoError(t, os.MkdirAll(filepath.Dir(phpBin), 0o755))
+	require.NoError(t, os.WriteFile(phpBin, []byte("#!/bin/sh"), 0o755))
+
+	// Fake-install composer 2.2.8 wrapper
+	composerBin := cfg.ComposerBin("2.2.8")
+	require.NoError(t, os.MkdirAll(filepath.Dir(composerBin), 0o755))
+	require.NoError(t, os.WriteFile(composerBin, []byte("#!/bin/sh"), 0o755))
+
+	checker := compat.NewChecker()
+	r := resolver.New(cfg, checker)
+
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".statora"), []byte("php = \"8.1\"\ncomposer = \"2.2\"\n"), 0o644))
+
+	res, err := r.Resolve(dir)
+	require.NoError(t, err)
+	assert.Equal(t, "8.1.25", res.PHP)    // normalized
+	assert.Equal(t, "2.2.8", res.Composer) // normalized from "2.2"
+}
+
+func TestResolve_KeepsPartialIfNothingInstalled(t *testing.T) {
+	cfg := makeConfig(t)
+	checker := compat.NewChecker()
+	r := resolver.New(cfg, checker)
+
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".statora"), []byte("php = \"8.1\"\ncomposer = \"2.2.0\"\n"), 0o644))
+
+	res, err := r.Resolve(dir)
+	require.NoError(t, err)
+	// Nothing installed → keep as-is so caller can prompt to install
+	assert.Equal(t, "8.1", res.PHP)
+	assert.Equal(t, "2.2.0", res.Composer)
+}

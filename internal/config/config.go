@@ -138,6 +138,11 @@ func (c *Config) ComposerPhar(version string) string {
 	return filepath.Join(c.Paths.ComposerDir, version, "composer.phar")
 }
 
+// ComposerBin returns the wrapper script path for a given Composer version.
+func (c *Config) ComposerBin(version string) string {
+	return filepath.Join(c.Paths.ComposerDir, version, "bin", "composer")
+}
+
 // ExtAvailableDir returns the extensions/available dir for a PHP version.
 func (c *Config) ExtAvailableDir(phpVersion string) string {
 	return filepath.Join(c.PHPRuntimeDir(phpVersion), "lib", "extensions", "available")

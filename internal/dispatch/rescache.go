@@ -32,9 +32,10 @@ func WriteCache(cfg *config.Config, key, value string) error {
 }
 
 // InvalidateCache rebuilds all rescache entries from the resolver.
+// All values are stored as version strings (not paths) for consistency.
 func InvalidateCache(cfg *config.Config, res resolver.Resolution) error {
 	if res.PHP != "" {
-		if err := WriteCache(cfg, KeyPHP, cfg.PHPBin(res.PHP)); err != nil {
+		if err := WriteCache(cfg, KeyPHP, res.PHP); err != nil {
 			return err
 		}
 		if err := WriteCache(cfg, KeyPHPActive, res.PHP); err != nil {
@@ -42,7 +43,7 @@ func InvalidateCache(cfg *config.Config, res resolver.Resolution) error {
 		}
 	}
 	if res.Composer != "" {
-		if err := WriteCache(cfg, KeyComposer, cfg.ComposerPhar(res.Composer)); err != nil {
+		if err := WriteCache(cfg, KeyComposer, res.Composer); err != nil {
 			return err
 		}
 	}

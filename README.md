@@ -72,19 +72,9 @@ source ~/.zshrc
 fish_add_path ~/.local/bin
 ```
 
-### 3. Set up shims so `php` and `composer` dispatch to the active version
+### 3. Set up shell integration so `php` and `composer` resolve per terminal
 
-Statora doubles as a `php` and `composer` shim. Create symlinks once:
-
-```bash
-statora symlinks
-```
-
-> Run `statora symlinks` again at any time to remove the symlinks.
-
-### 4. Set up auto-switching (optional)
-
-Add shell integration so `statora switch` runs automatically when you `cd` into a project (or open a terminal inside one):
+Add the hook so statora sets `PATH` per terminal, automatically picking up the correct PHP and Composer versions whenever you open a terminal in a project directory:
 
 **zsh** (`~/.zshrc`):
 ```zsh
@@ -95,6 +85,15 @@ eval "$(statora env)"
 ```bash
 eval "$(statora env)"
 ```
+
+**fish** (`~/.config/fish/config.fish`):
+```fish
+statora env | source
+```
+
+> Statora silently updates your PATH whenever you enter a directory with a `.statora` file.
+
+> **Per-terminal isolation:** Two terminals open in projects with different PHP versions are fully isolated — each gets its own PATH. Changing versions in one terminal has no effect on the other.
 
 **fish** (`~/.config/fish/config.fish`):
 ```fish
@@ -126,13 +125,7 @@ composer --version
 
 ## Uninstall
 
-### 1. Remove the shim symlinks
-
-```bash
-statora symlinks
-```
-
-### 2. Remove the statora binary and data
+### 1. Remove the statora binary and data
 
 **Homebrew:**
 ```bash
@@ -273,6 +266,19 @@ Reads `.statora`, compares against active versions, builds a plan, and shows an 
 
   Apply? [y/N]
 ```
+
+---
+
+## Commands Reference
+
+| Command | Description |
+|---|---|
+| `statora switch` | Read `.statora`, build a plan, and apply it interactively |
+| `statora use [--shell fish\|bash\|zsh]` | Output PATH export for active PHP/Composer versions (eval this) |
+| `statora php <subcommand>` | Manage PHP versions (install, uninstall, list, global, local, current, which, rehash) |
+| `statora composer <subcommand>` | Manage Composer versions (install, uninstall, list, global, local, current, compat) |
+| `statora ext <subcommand>` | Manage PHP extensions (install, uninstall, enable, disable, list, info) |
+| `statora env` | Emit shell hook code — pipe through `eval` once in your shell config |
 
 ---
 

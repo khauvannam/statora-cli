@@ -11,34 +11,34 @@ import (
 
 const zshHook = `autoload -U add-zsh-hook
 
-statora_auto_switch() {
+_statora_use() {
   if command -v statora >/dev/null 2>&1; then
-    statora switch >/dev/null 2>&1
+    eval "$(statora use --shell zsh 2>/dev/null)"
   fi
 }
 
-add-zsh-hook chpwd statora_auto_switch
-statora_auto_switch
+add-zsh-hook chpwd _statora_use
+_statora_use
 `
 
-const bashHook = `statora_auto_switch() {
+const bashHook = `_statora_use() {
   if command -v statora >/dev/null 2>&1; then
-    statora switch >/dev/null 2>&1
+    eval "$(statora use --shell bash 2>/dev/null)"
   fi
 }
 
-if [[ "${PROMPT_COMMAND}" != *"statora_auto_switch"* ]]; then
-  PROMPT_COMMAND="statora_auto_switch${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+if [[ "${PROMPT_COMMAND}" != *"_statora_use"* ]]; then
+  PROMPT_COMMAND="_statora_use${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
 fi
-statora_auto_switch
+_statora_use
 `
 
-const fishHook = `function __statora_auto_switch --on-variable PWD
+const fishHook = `function __statora_use --on-variable PWD
   if command -q statora
-    statora switch >/dev/null 2>&1
+    statora use --shell fish 2>/dev/null | source
   end
 end
-__statora_auto_switch
+__statora_use
 `
 
 var hooks = map[string]string{

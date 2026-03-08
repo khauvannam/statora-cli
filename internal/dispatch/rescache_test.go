@@ -38,13 +38,11 @@ func TestInvalidateCache(t *testing.T) {
 
 	require.NoError(t, dispatch.InvalidateCache(cfg, res))
 
-	phpPath := dispatch.ReadCache(cfg, dispatch.KeyPHP)
-	assert.Contains(t, phpPath, "8.2.15")
-	assert.Contains(t, phpPath, "bin/php")
+	phpVer := dispatch.ReadCache(cfg, dispatch.KeyPHP)
+	assert.Equal(t, "8.2.15", phpVer)
 
-	composerPath := dispatch.ReadCache(cfg, dispatch.KeyComposer)
-	assert.Contains(t, composerPath, "2.7.1")
-	assert.Contains(t, composerPath, "composer.phar")
+	composerVer := dispatch.ReadCache(cfg, dispatch.KeyComposer)
+	assert.Equal(t, "2.7.1", composerVer)
 
 	active := dispatch.ReadCache(cfg, dispatch.KeyPHPActive)
 	assert.Equal(t, "8.2.15", active)
