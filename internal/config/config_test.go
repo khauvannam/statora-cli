@@ -3,6 +3,7 @@ package config_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -71,4 +72,12 @@ func TestConfig_PHPBin(t *testing.T) {
 	bin := cfg.PHPBin("8.2.15")
 	assert.Contains(t, bin, "8.2.15")
 	assert.Contains(t, bin, "bin/php")
+}
+
+func TestComposerBin(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	cfg, err := config.New(false)
+	require.NoError(t, err)
+	got := cfg.ComposerBin("2.9.5")
+	assert.True(t, strings.HasSuffix(got, "composer/2.9.5/bin/composer"), got)
 }
