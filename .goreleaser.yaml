@@ -89,13 +89,15 @@ brews:
     description: "PHP version manager — manages PHP, Composer, and extensions per project."
     license: "MIT"
     caveats: |
-      To use statora as a transparent php/composer shim, add symlinks:
-        ln -sf $(brew --prefix)/bin/statora $(brew --prefix)/bin/php
-        ln -sf $(brew --prefix)/bin/statora $(brew --prefix)/bin/composer
+      To use statora as a transparent php/composer shim, create symlinks:
+        statora symlinks
 
-      To uninstall, remove the symlinks and data directory first:
-        rm $(brew --prefix)/bin/php
-        rm $(brew --prefix)/bin/composer
+      To enable auto-switching when you cd into a project, add to your shell rc:
+        zsh/bash:  eval "$(statora env)"
+        fish:      statora env | source
+
+      To uninstall, remove symlinks and data first:
+        statora symlinks
         rm -rf ~/.statora
       Then run: brew uninstall statora
     install: |

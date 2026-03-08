@@ -80,7 +80,28 @@ statora symlinks
 
 > Run `statora symlinks` again at any time to remove the symlinks.
 
-### 4. Activate a version
+### 4. Set up auto-switching (optional)
+
+Add shell integration so `statora switch` runs automatically when you `cd` into a project (or open a terminal inside one):
+
+**zsh** (`~/.zshrc`):
+```zsh
+eval "$(statora env)"
+```
+
+**bash** (`~/.bashrc`):
+```bash
+eval "$(statora env)"
+```
+
+**fish** (`~/.config/fish/config.fish`):
+```fish
+statora env | source
+```
+
+> Statora will silently switch PHP, Composer, and extensions whenever you enter a directory with a `.statora` file.
+
+### 5. Activate a version
 
 Set a global default so `php` and `composer` work from any directory:
 
@@ -92,7 +113,7 @@ statora switch
 
 `statora switch` writes the active binary paths to `~/.statora/.rescache`. The shims read from this cache at exec time — zero startup overhead.
 
-### 5. Verify
+### 6. Verify
 
 ```bash
 php -v
