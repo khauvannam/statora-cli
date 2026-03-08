@@ -87,3 +87,22 @@ func TestManager_Phar(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, cfg.ComposerPhar("2.7.1"), path)
 }
+
+func TestManager_CreateWrapperScript(t *testing.T) {
+	cfg := makeConfig(t)
+	m := composer.NewManager(cfg, zap.NewNop())
+	fakeInstall(t, cfg, "2.9.5")
+
+	err := m.CreateWrapperScript("2.9.5")
+	require.NoError(t, err)
+
+	bin := cfg.ComposerBin("2.9.5")
+	info, err := os.Stat(bin)
+	require.NoError(t, err)
+	assert.True(t, info.Mode()&0o111 != 0, "wrapper must be executable")
+
+	content, err := os.ReadFile(bin)
+	require.NoError(t, err)
+	assert.Contains(t, string(content), "composer.phar")
+	assert.Contains(t, string(content), "#!/bin/sh")
+}

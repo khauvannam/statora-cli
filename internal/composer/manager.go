@@ -54,7 +54,11 @@ func (m *Manager) Install(versionOrConstraint string) error {
 			"sha256hint": sha256, // from getcomposer.org/versions (may be empty)
 		},
 	}
-	return pipeline.Run(ctx)
+	if err := pipeline.Run(ctx); err != nil {
+		return err
+	}
+
+	return m.CreateWrapperScript(concrete)
 }
 
 // Uninstall removes a Composer version directory.
@@ -82,6 +86,25 @@ func (m *Manager) List() ([]string, error) {
 		}
 	}
 	return versions, nil
+}
+
+// CreateWrapperScript writes an executable bin/composer shell script that
+// invokes the PHAR for the given version. This allows ~/.statora/composer/<v>/bin/
+// to be placed on PATH for fnm-style dispatch.
+func (m *Manager) CreateWrapperScript(version string) error {
+	binDir := filepath.Dir(m.cfg.ComposerBin(version))
+	if err := os.MkdirAll(binDir, 0o755); err != nil {
+		return fmt.Errorf("creating composer bin dir: %w", err)
+	}
+
+	phar := m.cfg.ComposerPhar(version)
+	script := fmt.Sprintf("#!/bin/sh\nexec php %s \"$@\"\n", phar)
+
+	bin := m.cfg.ComposerBin(version)
+	if err := os.WriteFile(bin, []byte(script), 0o755); err != nil {
+		return fmt.Errorf("writing composer wrapper script: %w", err)
+	}
+	return nil
 }
 
 // IsInstalled reports whether the composer.phar exists for a version.
