@@ -92,6 +92,12 @@ brews:
       To use statora as a transparent php/composer shim, add symlinks:
         ln -sf $(brew --prefix)/bin/statora $(brew --prefix)/bin/php
         ln -sf $(brew --prefix)/bin/statora $(brew --prefix)/bin/composer
+
+      To uninstall, remove the symlinks and data directory first:
+        rm $(brew --prefix)/bin/php
+        rm $(brew --prefix)/bin/composer
+        rm -rf ~/.statora
+      Then run: brew uninstall statora
     install: |
       bin.install "statora"
     test: |
