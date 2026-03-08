@@ -12,7 +12,8 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the statora version",
 	Run: func(_ *cobra.Command, _ []string) {
-		fmt.Println(Version)
+		fmt.Printf("Statora %s\n", Version)
+		fmt.Println("Copyright (c) 2024-2026 The Statora Contributors")
 	},
 }
 
