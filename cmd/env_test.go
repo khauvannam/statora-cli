@@ -50,8 +50,8 @@ func TestEnvOutput_Zsh(t *testing.T) {
 	require.NoError(t, err)
 	out := buf.String()
 	assert.Contains(t, out, "add-zsh-hook")
-	assert.Contains(t, out, "statora_auto_switch")
-	assert.Contains(t, out, "statora switch")
+	assert.Contains(t, out, "_statora_use")
+	assert.Contains(t, out, "statora use")
 	assert.Contains(t, out, "chpwd")
 }
 
@@ -61,8 +61,8 @@ func TestEnvOutput_Bash(t *testing.T) {
 	require.NoError(t, err)
 	out := buf.String()
 	assert.Contains(t, out, "PROMPT_COMMAND")
-	assert.Contains(t, out, "statora_auto_switch")
-	assert.Contains(t, out, "statora switch")
+	assert.Contains(t, out, "_statora_use")
+	assert.Contains(t, out, "statora use")
 }
 
 func TestEnvOutput_Fish(t *testing.T) {
@@ -71,7 +71,7 @@ func TestEnvOutput_Fish(t *testing.T) {
 	require.NoError(t, err)
 	out := buf.String()
 	assert.Contains(t, out, "--on-variable PWD")
-	assert.Contains(t, out, "statora switch")
+	assert.Contains(t, out, "statora use")
 }
 
 func TestEnvOutput_EndsWithNewline(t *testing.T) {
