@@ -17,7 +17,8 @@ type Resolution struct {
 }
 
 // Resolver resolves active PHP/Composer versions using priority:
-//   project .statora > global ~/.statora/versions/global.toml
+//
+//	project .statora > global ~/.statora/versions/global.toml
 type Resolver struct {
 	cfg     *config.Config
 	checker *compat.Checker
@@ -43,7 +44,11 @@ func (r *Resolver) Resolve(dir string) (Resolution, error) {
 				return Resolution{}, err
 			}
 		}
-		return Resolution{PHP: proj.PHP, Composer: composer, Source: "project"}, nil
+		return Resolution{
+			PHP:      r.normalizePHP(proj.PHP),
+			Composer: r.normalizeComposer(composer),
+			Source:   "project",
+		}, nil
 	}
 
 	// 2. Try global
@@ -59,7 +64,11 @@ func (r *Resolver) Resolve(dir string) (Resolution, error) {
 				return Resolution{}, err
 			}
 		}
-		return Resolution{PHP: global.PHP, Composer: composer, Source: "global"}, nil
+		return Resolution{
+			PHP:      r.normalizePHP(global.PHP),
+			Composer: r.normalizeComposer(composer),
+			Source:   "global",
+		}, nil
 	}
 
 	return Resolution{Source: "none"}, nil
@@ -87,4 +96,71 @@ func NearestProjectFile(dir string) string {
 		}
 		dir = parent
 	}
+}
+
+// normalizePHP normalizes a partial PHP version to the highest installed concrete.
+// Returns version unchanged if nothing matching is installed.
+func (r *Resolver) normalizePHP(version string) string {
+	installed, err := r.installedPHPVersions()
+	if err != nil || len(installed) == 0 {
+		return version
+	}
+	if norm := NormalizeInstalled(version, installed); norm != "" {
+		return norm
+	}
+	return version
+}
+
+// normalizeComposer normalizes a partial Composer version to the highest installed concrete.
+// Returns version unchanged if nothing matching is installed.
+func (r *Resolver) normalizeComposer(version string) string {
+	installed, err := r.installedComposerVersions()
+	if err != nil || len(installed) == 0 {
+		return version
+	}
+	if norm := NormalizeInstalled(version, installed); norm != "" {
+		return norm
+	}
+	return version
+}
+
+// installedPHPVersions scans ~/.statora/runtimes/php/ for dirs that have a php binary.
+func (r *Resolver) installedPHPVersions() ([]string, error) {
+	dir := filepath.Join(r.cfg.Paths.RuntimesDir, "php")
+	entries, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var versions []string
+	for _, e := range entries {
+		if e.IsDir() {
+			if _, err := os.Stat(r.cfg.PHPBin(e.Name())); err == nil {
+				versions = append(versions, e.Name())
+			}
+		}
+	}
+	return versions, nil
+}
+
+// installedComposerVersions scans ~/.statora/composer/ for dirs that have a bin/composer wrapper.
+func (r *Resolver) installedComposerVersions() ([]string, error) {
+	entries, err := os.ReadDir(r.cfg.Paths.ComposerDir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var versions []string
+	for _, e := range entries {
+		if e.IsDir() {
+			if _, err := os.Stat(r.cfg.ComposerBin(e.Name())); err == nil {
+				versions = append(versions, e.Name())
+			}
+		}
+	}
+	return versions, nil
 }
