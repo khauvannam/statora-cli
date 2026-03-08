@@ -64,13 +64,12 @@ func (s *Switcher) BuildPlan(dir string) (*Plan, error) {
 
 	// Composer action
 	currentComposer := dispatch.ReadCache(s.cfg, dispatch.KeyComposer)
-	composerPhar := s.cfg.ComposerPhar(res.Composer)
-	if currentComposer != composerPhar {
+	if currentComposer != res.Composer {
 		plan.Actions = append(plan.Actions, Action{
 			Kind:    "composer",
 			Name:    res.Composer,
 			Current: currentComposer,
-			Next:    composerPhar,
+			Next:    res.Composer,
 		})
 	}
 
