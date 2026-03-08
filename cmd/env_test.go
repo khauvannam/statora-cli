@@ -74,7 +74,7 @@ func TestEnvOutput_Fish(t *testing.T) {
 	assert.Contains(t, out, "statora switch")
 }
 
-func TestEnvOutput_StartsWithNewlineForEval(t *testing.T) {
+func TestEnvOutput_EndsWithNewline(t *testing.T) {
 	// Each snippet should end with a newline so eval works cleanly.
 	for _, shell := range []string{"zsh", "bash", "fish"} {
 		var buf bytes.Buffer
