@@ -30,6 +30,12 @@ func (s *resolveSourceStage) Run(ctx *installer.Context) error {
 	}
 	ctx.Data["url"] = url
 	ctx.Data["sha256"] = sha256
+
+	// Normalize ctx.Version to the concrete patch version embedded in the URL
+	// (e.g. "8.1" → "8.1.25") so all downstream stages use the full version.
+	if concrete := ExtractPHPVersion(url); concrete != "" {
+		ctx.Version = concrete
+	}
 	return nil
 }
 
