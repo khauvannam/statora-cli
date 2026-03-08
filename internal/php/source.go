@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path/filepath"
+	"path"
 	"strings"
 	"time"
 )
@@ -60,7 +60,7 @@ func ResolveSource(version string) (url, sha256 string, err error) {
 // E.g. "https://www.php.net/distributions/php-8.1.25.tar.gz" → "8.1.25".
 // Returns "" if the filename does not match the expected pattern.
 func ExtractPHPVersion(url string) string {
-	base := filepath.Base(url)                 // "php-8.1.25.tar.gz"
+	base := path.Base(url)                     // "php-8.1.25.tar.gz"
 	base = strings.TrimSuffix(base, ".tar.gz") // "php-8.1.25"
 	base = strings.TrimPrefix(base, "php-")    // "8.1.25"
 	if !IsVersionString(base) {

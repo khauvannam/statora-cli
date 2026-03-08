@@ -28,8 +28,7 @@ func TestExtractPHPVersion_Empty(t *testing.T) {
 	assert.Equal(t, "", php.ExtractPHPVersion(""))
 }
 
-func TestResolveSourceStage_NormalizesVersion(t *testing.T) {
-	// ExtractPHPVersion should give back the patch version embedded in the URL.
+func TestExtractPHPVersion_KnownURL(t *testing.T) {
 	url := "https://www.php.net/distributions/php-8.1.25.tar.gz"
 	assert.Equal(t, "8.1.25", php.ExtractPHPVersion(url))
 }
