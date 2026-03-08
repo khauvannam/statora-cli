@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const Version = "1.0.3"
+const Version = "1.0.4"
 
 const versionOutput = "Statora " + Version + "\nCopyright (c) 2024-2026 haonam khauvannam (khauvannam)\n"
 
