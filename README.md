@@ -95,7 +95,14 @@ statora env | source
 
 > **Per-terminal isolation:** Two terminals open in projects with different PHP versions are fully isolated — each gets its own PATH. Changing versions in one terminal has no effect on the other.
 
-### 4. Activate a version
+**fish** (`~/.config/fish/config.fish`):
+```fish
+statora env | source
+```
+
+> Statora will silently switch PHP, Composer, and extensions whenever you enter a directory with a `.statora` file.
+
+### 5. Activate a version
 
 Set a global default so `php` and `composer` work from any directory:
 
@@ -107,7 +114,7 @@ statora switch
 
 `statora switch` writes the active binary paths to `~/.statora/.rescache`. The shims read from this cache at exec time — zero startup overhead.
 
-### 5. Verify
+### 6. Verify
 
 ```bash
 php -v
