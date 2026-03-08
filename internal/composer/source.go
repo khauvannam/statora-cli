@@ -32,6 +32,36 @@ func IsConstraint(s string) bool {
 	return strings.ContainsAny(s, " <>~^*|")
 }
 
+// IsPartialVersion reports whether s is a partial version with 1 or 2 numeric parts
+// (e.g. "2" or "2.7") rather than a full three-part version or a constraint.
+func IsPartialVersion(s string) bool {
+	if s == "" || IsConstraint(s) {
+		return false
+	}
+	parts := strings.Split(s, ".")
+	if len(parts) < 1 || len(parts) > 2 {
+		return false
+	}
+	for _, p := range parts {
+		if p == "" {
+			return false
+		}
+		for _, c := range p {
+			if c < '0' || c > '9' {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// MatchesPartialPrefix reports whether version starts with the partial prefix.
+// E.g. partial="2.7", version="2.7.4" → true; partial="2.7", version="2.70.0" → false.
+func MatchesPartialPrefix(partial, version string) bool {
+	prefix := partial + "."
+	return strings.HasPrefix(version, prefix)
+}
+
 // ResolveVersion resolves a concrete version string or semver constraint to a
 // concrete version tag and its SHA256 hash using getcomposer.org/versions.
 // SHA256 may be empty if the entry is not listed (old patch versions, etc.).
@@ -51,6 +81,29 @@ func ResolveVersion(input string) (version, sha256 string, err error) {
 	all := append(payload.Stable, payload.Preview...)
 
 	if !IsConstraint(input) {
+		// Partial version (e.g. "2" or "2.7"): find highest stable matching prefix.
+		if IsPartialVersion(input) {
+			var best *semver.Version
+			var bestEntry versionEntry
+			for _, e := range payload.Stable {
+				if !MatchesPartialPrefix(input, e.Version) {
+					continue
+				}
+				v, vErr := semver.NewVersion(e.Version)
+				if vErr != nil {
+					continue
+				}
+				if best == nil || v.GreaterThan(best) {
+					best = v
+					bestEntry = e
+				}
+			}
+			if best == nil {
+				return "", "", fmt.Errorf("no stable Composer release matches %q", input)
+			}
+			return bestEntry.Version, bestEntry.SHA256, nil
+		}
+
 		// Concrete version — look up SHA256; proceed without checksum if not listed.
 		for _, e := range all {
 			if e.Version == input {
