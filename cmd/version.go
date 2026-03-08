@@ -8,7 +8,7 @@ import (
 
 const Version = "1.0.5"
 
-const versionOutput = "Statora " + Version + "\nCopyright (c) 2024-2026 haonam khauvannam (khauvannam)\n"
+const versionOutput = "Statora " + Version + "\nCopyright (c) 2024-2026 Statora Contributors"
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
