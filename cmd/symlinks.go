@@ -62,12 +62,7 @@ If only one exists, the missing one is created.`,
 		if err != nil {
 			return fmt.Errorf("resolving statora binary: %w", err)
 		}
-		// EvalSymlinks resolves the real path (e.g. Homebrew cellar).
-		real, err := filepath.EvalSymlinks(exe)
-		if err != nil {
-			return fmt.Errorf("resolving real binary path: %w", err)
-		}
-		return ToggleSymlinks(filepath.Dir(real))
+		return ToggleSymlinks(filepath.Dir(exe))
 	},
 }
 
