@@ -18,14 +18,12 @@ var shims = []string{"php", "composer"}
 func ToggleSymlinks(binDir string) error {
 	statoraBin := filepath.Join(binDir, "statora")
 
-	// Check which shims already exist.
-	var missing, present []string
+	// Check which shims are missing.
+	var missing []string
 	for _, name := range shims {
 		target := filepath.Join(binDir, name)
 		if _, err := os.Lstat(target); os.IsNotExist(err) {
 			missing = append(missing, name)
-		} else {
-			present = append(present, name)
 		}
 	}
 
@@ -48,13 +46,12 @@ func ToggleSymlinks(binDir string) error {
 		}
 	}
 	fmt.Printf("Created symlinks: %s\n", strings.Join(missing, ", "))
-	_ = present // already exist, no action needed
 	return nil
 }
 
 var symlinksCmd = &cobra.Command{
 	Use:   "symlinks",
-	Short: "Toggle php and composer shim symlinks next to the statora binary",
+	Short: "Toggle php and composer shim symlinks",
 	Long: `Toggle php and composer shim symlinks.
 
 If neither symlink exists, both are created.
