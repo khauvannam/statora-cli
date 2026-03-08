@@ -1,5 +1,7 @@
 # Statora
 
+> **Warning:** This project is under active development. You may encounter bugs or breaking changes. If you run into any issues, please [open an issue](https://github.com/khauvannam/statora-cli/issues).
+
 PHP version manager for developers who work across multiple projects with different PHP, Composer, and extension requirements.
 
 ---
