@@ -11,7 +11,7 @@ import (
 func StripStatoraDirs(path, homeDir string) string {
 	statoraPrefix := homeDir + "/.statora/"
 	var kept []string
-	for _, p := range strings.Split(path, ":") {
+	for p := range strings.SplitSeq(path, ":") {
 		if p != "" && !strings.HasPrefix(p, statoraPrefix) {
 			kept = append(kept, p)
 		}
