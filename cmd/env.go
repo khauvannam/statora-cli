@@ -34,7 +34,7 @@ statora_auto_switch
 `
 
 const fishHook = `function __statora_auto_switch --on-variable PWD
-  if command -v statora >/dev/null 2>&1
+  if command -q statora
     statora switch >/dev/null 2>&1
   end
 end
@@ -70,8 +70,6 @@ func PrintEnv(w io.Writer, shell string) error {
 	return err
 }
 
-var shellFlag string
-
 var envCmd = &cobra.Command{
 	Use:   "env",
 	Short: "Print shell hook for auto-switching PHP/Composer on directory change",
@@ -81,16 +79,17 @@ Add to your shell rc file:
 
   zsh/bash:  eval "$(statora env)"
   fish:      statora env | source`,
-	RunE: func(_ *cobra.Command, _ []string) error {
+}
+
+func init() {
+	var shellFlag string
+	envCmd.Flags().StringVar(&shellFlag, "shell", "", "Shell to target (zsh, bash, fish)")
+	envCmd.RunE = func(_ *cobra.Command, _ []string) error {
 		shell, err := DetectShell(os.Getenv("SHELL"), shellFlag)
 		if err != nil {
 			return err
 		}
 		return PrintEnv(os.Stdout, shell)
-	},
-}
-
-func init() {
-	envCmd.Flags().StringVar(&shellFlag, "shell", "", "Shell to target (zsh, bash, fish)")
+	}
 	Root.AddCommand(envCmd)
 }
