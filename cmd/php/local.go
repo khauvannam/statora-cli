@@ -31,29 +31,27 @@ var localCmd = &cobra.Command{
 
 			current := v.GetString("php")
 
-			concrete, ok := p.ResolveInstalled(version)
-			if !ok {
+			if !p.IsInstalled(version) {
 				fmt.Printf("PHP %s is not installed. Installing...\n", version)
-				concrete, err = p.Install(version)
-				if err != nil {
+				if err := p.Install(version); err != nil {
 					return fmt.Errorf("auto-install PHP %s: %w", version, err)
 				}
 			}
 
-			if current == concrete {
-				fmt.Printf("PHP is already set to %s (no change).\n", concrete)
+			if current == version {
+				fmt.Printf("PHP is already set to %s (no change).\n", version)
 				return nil
 			}
 
-			v.Set("php", concrete)
+			v.Set("php", version)
 			if err := v.WriteConfigAs(dir + "/.statora"); err != nil {
 				return err
 			}
 
 			if current == "" {
-				fmt.Printf("Set local PHP to %s.\n", concrete)
+				fmt.Printf("Set local PHP to %s.\n", version)
 			} else {
-				fmt.Printf("Updated local PHP: %s → %s.\n", current, concrete)
+				fmt.Printf("Updated local PHP: %s → %s.\n", current, version)
 			}
 			return nil
 		})

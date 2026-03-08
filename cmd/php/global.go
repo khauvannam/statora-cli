@@ -18,12 +18,9 @@ var globalCmd = &cobra.Command{
 	RunE: func(c *cobra.Command, args []string) error {
 		version := args[0]
 		return app.Invoke(cmd.Debug(), func(cfg *config.Config, p *php.Plugin) error {
-			concrete, ok := p.ResolveInstalled(version)
-			if !ok {
+			if !p.IsInstalled(version) {
 				fmt.Printf("PHP %s is not installed. Installing...\n", version)
-				var err error
-				concrete, err = p.Install(version)
-				if err != nil {
+				if err := p.Install(version); err != nil {
 					return fmt.Errorf("auto-install PHP %s: %w", version, err)
 				}
 			}
@@ -32,7 +29,7 @@ var globalCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			g.PHP = concrete
+			g.PHP = version
 			return cfg.WriteGlobal(g)
 		})
 	},

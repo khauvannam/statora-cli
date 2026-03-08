@@ -123,26 +123,6 @@ func (c *Config) WriteGlobal(g GlobalConfig) error {
 	return v.WriteConfigAs(c.Paths.GlobalFile)
 }
 
-// WriteProject updates the .statora file in dir with the given config fields.
-// Existing keys not present in p are preserved.
-func WriteProject(dir string, p ProjectConfig) error {
-	path := filepath.Join(dir, ".statora")
-	v := viper.New()
-	v.SetConfigFile(path)
-	v.SetConfigType("toml")
-	_ = v.ReadInConfig()
-	if p.PHP != "" {
-		v.Set("php", p.PHP)
-	}
-	if p.Composer != "" {
-		v.Set("composer", p.Composer)
-	}
-	if len(p.Extensions) > 0 {
-		v.Set("extensions", p.Extensions)
-	}
-	return v.WriteConfigAs(path)
-}
-
 // PHPRuntimeDir returns the install path for a given PHP version.
 func (c *Config) PHPRuntimeDir(version string) string {
 	return filepath.Join(c.Paths.RuntimesDir, "php", version)

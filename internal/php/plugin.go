@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
@@ -24,10 +23,10 @@ func NewPlugin(cfg *config.Config, log *zap.Logger) *Plugin {
 }
 
 // Install downloads, compiles, and installs a PHP version.
-func (p *Plugin) Install(version string) (string, error) {
-	if concrete, ok := p.ResolveInstalled(version); ok {
-		fmt.Printf("PHP %s is already installed.\n", concrete)
-		return concrete, nil
+func (p *Plugin) Install(version string) error {
+	if p.IsInstalled(version) {
+		fmt.Printf("PHP %s is already installed.\n", version)
+		return nil
 	}
 
 	pipeline := installer.New(
@@ -46,60 +45,7 @@ func (p *Plugin) Install(version string) (string, error) {
 		Log:      p.log,
 		Data:     map[string]any{},
 	}
-	if err := pipeline.Run(ctx); err != nil {
-		return "", err
-	}
-	return ctx.Version, nil
-}
-
-// ResolveInstalled returns the concrete installed version matching the given spec.
-// For a full 3-part version it checks directly. For a partial like "8.1",
-// it returns the highest installed 8.1.x.
-func (p *Plugin) ResolveInstalled(version string) (string, bool) {
-	if p.IsInstalled(version) {
-		return version, true
-	}
-	// Only try prefix matching for non-concrete (partial) versions.
-	if IsVersionString(version) {
-		return "", false
-	}
-	installed, err := p.InstalledVersions()
-	if err != nil || len(installed) == 0 {
-		return "", false
-	}
-	prefix := version + "."
-	var best string
-	for _, v := range installed {
-		if strings.HasPrefix(v, prefix) {
-			if best == "" || compareVersionStrings(v, best) > 0 {
-				best = v
-			}
-		}
-	}
-	if best != "" {
-		return best, true
-	}
-	return "", false
-}
-
-// compareVersionStrings compares two dot-separated version strings numerically.
-// Returns positive if a > b, negative if a < b, zero if equal.
-func compareVersionStrings(a, b string) int {
-	ap := strings.SplitN(a, ".", 3)
-	bp := strings.SplitN(b, ".", 3)
-	for i := range 3 {
-		var ai, bi int
-		if i < len(ap) {
-			ai, _ = strconv.Atoi(ap[i])
-		}
-		if i < len(bp) {
-			bi, _ = strconv.Atoi(bp[i])
-		}
-		if ai != bi {
-			return ai - bi
-		}
-	}
-	return 0
+	return pipeline.Run(ctx)
 }
 
 // Uninstall removes a PHP version's runtime directory.
