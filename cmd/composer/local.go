@@ -31,27 +31,30 @@ var localCmd = &cobra.Command{
 
 			current := v.GetString("composer")
 
-			if !m.IsInstalled(version) {
+			concrete, ok := m.ResolveInstalled(version)
+			if !ok {
 				fmt.Printf("Composer %s is not installed. Installing...\n", version)
-				if err := m.Install(version); err != nil {
-					return fmt.Errorf("auto-install Composer %s: %w", version, err)
+				var installErr error
+				concrete, installErr = m.Install(version)
+				if installErr != nil {
+					return fmt.Errorf("auto-install Composer %s: %w", version, installErr)
 				}
 			}
 
-			if current == version {
-				fmt.Printf("Composer is already set to %s (no change).\n", version)
+			if current == concrete {
+				fmt.Printf("Composer is already set to %s (no change).\n", concrete)
 				return nil
 			}
 
-			v.Set("composer", version)
+			v.Set("composer", concrete)
 			if err := v.WriteConfigAs(dir + "/.statora"); err != nil {
 				return err
 			}
 
 			if current == "" {
-				fmt.Printf("Set local Composer to %s.\n", version)
+				fmt.Printf("Set local Composer to %s.\n", concrete)
 			} else {
-				fmt.Printf("Updated local Composer: %s → %s.\n", current, version)
+				fmt.Printf("Updated local Composer: %s → %s.\n", current, concrete)
 			}
 			return nil
 		})

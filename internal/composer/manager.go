@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -23,10 +25,10 @@ func NewManager(cfg *config.Config, log *zap.Logger) *Manager {
 
 // Install downloads and installs a Composer version.
 // version may be a concrete version ("2.7.4") or a semver constraint (">= 2.2.0, < 3.0.0").
-func (m *Manager) Install(versionOrConstraint string) error {
+func (m *Manager) Install(versionOrConstraint string) (string, error) {
 	concrete, sha256, err := ResolveVersion(versionOrConstraint)
 	if err != nil {
-		return fmt.Errorf("resolving Composer version: %w", err)
+		return "", fmt.Errorf("resolving Composer version: %w", err)
 	}
 	if concrete != versionOrConstraint {
 		fmt.Printf("  Resolved %q → %s\n", versionOrConstraint, concrete)
@@ -34,7 +36,7 @@ func (m *Manager) Install(versionOrConstraint string) error {
 
 	if m.IsInstalled(concrete) {
 		fmt.Printf("Composer %s is already installed.\n", concrete)
-		return nil
+		return concrete, nil
 	}
 
 	pipeline := installer.New(
@@ -54,7 +56,52 @@ func (m *Manager) Install(versionOrConstraint string) error {
 			"sha256hint": sha256, // from getcomposer.org/versions (may be empty)
 		},
 	}
-	return pipeline.Run(ctx)
+	if err := pipeline.Run(ctx); err != nil {
+		return "", err
+	}
+	return concrete, nil
+}
+
+// ResolveInstalled returns the concrete installed version matching the given spec.
+func (m *Manager) ResolveInstalled(version string) (string, bool) {
+	if m.IsInstalled(version) {
+		return version, true
+	}
+	installed, err := m.List()
+	if err != nil || len(installed) == 0 {
+		return "", false
+	}
+	prefix := version + "."
+	var best string
+	for _, v := range installed {
+		if strings.HasPrefix(v, prefix) {
+			if best == "" || compareVersionStrings(v, best) > 0 {
+				best = v
+			}
+		}
+	}
+	if best != "" {
+		return best, true
+	}
+	return "", false
+}
+
+func compareVersionStrings(a, b string) int {
+	ap := strings.SplitN(a, ".", 3)
+	bp := strings.SplitN(b, ".", 3)
+	for i := range 3 {
+		var ai, bi int
+		if i < len(ap) {
+			ai, _ = strconv.Atoi(ap[i])
+		}
+		if i < len(bp) {
+			bi, _ = strconv.Atoi(bp[i])
+		}
+		if ai != bi {
+			return ai - bi
+		}
+	}
+	return 0
 }
 
 // Uninstall removes a Composer version directory.

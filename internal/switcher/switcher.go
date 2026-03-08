@@ -49,6 +49,14 @@ func (s *Switcher) BuildPlan(dir string) (*Plan, error) {
 		return nil, fmt.Errorf("no PHP version configured — set one with `statora php global <version>` or create a .statora file")
 	}
 
+	// Normalize partial versions to their concrete installed counterparts.
+	if concrete, ok := s.php.ResolveInstalled(res.PHP); ok {
+		res.PHP = concrete
+	}
+	if concrete, ok := s.composer.ResolveInstalled(res.Composer); ok {
+		res.Composer = concrete
+	}
+
 	plan := &Plan{Resolution: res}
 
 	// PHP action
@@ -84,17 +92,21 @@ func (s *Switcher) Execute(plan *Plan) error {
 	// Ensure PHP is installed.
 	if !s.php.IsInstalled(res.PHP) {
 		fmt.Printf("Installing PHP %s...\n", res.PHP)
-		if err := s.php.Install(res.PHP); err != nil {
+		concrete, err := s.php.Install(res.PHP)
+		if err != nil {
 			return fmt.Errorf("installing PHP %s: %w", res.PHP, err)
 		}
+		res.PHP = concrete
 	}
 
 	// Ensure Composer is installed.
 	if !s.composer.IsInstalled(res.Composer) {
 		fmt.Printf("Installing Composer %s...\n", res.Composer)
-		if err := s.composer.Install(res.Composer); err != nil {
+		concrete, err := s.composer.Install(res.Composer)
+		if err != nil {
 			return fmt.Errorf("installing Composer %s: %w", res.Composer, err)
 		}
+		res.Composer = concrete
 	}
 
 	// Enable declared extensions.
