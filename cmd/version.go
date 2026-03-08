@@ -8,15 +8,18 @@ import (
 
 const Version = "1.0.3"
 
+const versionOutput = "Statora " + Version + "\nCopyright (c) 2024-2026 haonam khauvannam (khauvannam)\n"
+
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the statora version",
 	Run: func(_ *cobra.Command, _ []string) {
-		fmt.Printf("Statora %s\n", Version)
-		fmt.Println("Copyright (c) 2024-2026 The Statora Contributors")
+		fmt.Print(versionOutput)
 	},
 }
 
 func init() {
+	Root.Version = Version
+	Root.SetVersionTemplate(versionOutput)
 	Root.AddCommand(versionCmd)
 }
